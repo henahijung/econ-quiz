@@ -395,9 +395,24 @@ input[type=text]:focus{border-color:var(--blue)}
 <div id="screen-rank" class="screen">
   <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
     <h2 style="font-size:20px;font-weight:800">🏆 실시간 랭킹</h2>
-    <button class="btn btn-sm btn-o" onclick="loadPlayers()">새로고침</button>
+    <div style="display:flex;gap:6px">
+      <button class="btn btn-sm btn-o" onclick="loadPlayers()">새로고침</button>
+      <button class="btn btn-sm" style="background:#fff;color:var(--red);border:1.5px solid var(--red);padding:9px 14px;font-size:13px;width:auto;display:inline-block" onclick="openResetModal()">🗑️ 초기화</button>
+    </div>
   </div>
   <div id="rank-list"><div class="loading"><span class="spin">⏳</span></div></div>
+
+  <!-- 초기화 모달 -->
+  <div id="reset-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:200;align-items:flex-end;justify-content:center">
+    <div style="background:#fff;border-radius:20px 20px 0 0;padding:24px 20px 36px;width:100%;max-width:480px">
+      <h3 style="font-size:17px;font-weight:700;margin-bottom:6px">🗑️ 기록 초기화</h3>
+      <p style="font-size:13px;color:var(--muted);line-height:1.6;margin-bottom:16px">모든 플레이어의 점수와 기록이 삭제돼요.<br>관리자 비밀번호를 입력해주세요.</p>
+      <input type="password" id="reset-pw" placeholder="비밀번호 입력..." style="width:100%;padding:12px 14px;font-size:16px;border:1.5px solid var(--border);border-radius:10px;outline:none;font-family:inherit;margin-bottom:10px">
+      <p id="reset-err" style="font-size:13px;color:var(--red);margin-bottom:10px;min-height:18px"></p>
+      <button class="btn" style="background:var(--red);color:#fff;margin-bottom:8px" onclick="confirmReset()">초기화하기</button>
+      <button class="btn" style="background:var(--border);color:var(--muted)" onclick="closeResetModal()">취소</button>
+    </div>
+  </div>
 </div>
 
 
@@ -793,6 +808,41 @@ async function finishQuiz(){
 }
 
 
+function openResetModal(){
+  document.getElementById('reset-modal').style.display='flex';
+  document.getElementById('reset-pw').value='';
+  document.getElementById('reset-err').textContent='';
+  setTimeout(()=>document.getElementById('reset-pw').focus(),300);
+}
+function closeResetModal(){
+  document.getElementById('reset-modal').style.display='none';
+}
+async function confirmReset(){
+  const pw=document.getElementById('reset-pw').value;
+  if(pw!=='1234'){
+    document.getElementById('reset-err').textContent='❌ 비밀번호가 틀렸어요';
+    document.getElementById('reset-pw').value='';
+    return;
+  }
+  closeResetModal();
+  if(demo){
+    players={};saveDemo();
+    me=null;
+    renderPlayers();renderRank();
+    alert('✅ 기록이 초기화됐어요!');
+    return;
+  }
+  if(!db)return;
+  try{
+    await db.ref('players').remove();
+    players={};me=null;
+    renderPlayers();renderRank();
+    alert('✅ 모든 기록이 초기화됐어요!');
+  }catch(e){
+    alert('초기화 실패: '+e.message);
+  }
+}
+
 function renderRank(){
   const list=Object.values(players).sort((a,b)=>(b.totalScore||0)-(a.totalScore||0));
   if(!list.length){document.getElementById('rank-list').innerHTML='<div class="empty">아직 플레이어가 없어요</div>';return;}
@@ -819,6 +869,8 @@ document.addEventListener('DOMContentLoaded',()=>{
   };
   tryInit();
   document.getElementById('input-name').addEventListener('keydown',e=>{if(e.key==='Enter')join();});
+  document.getElementById('reset-pw').addEventListener('keydown',e=>{if(e.key==='Enter')confirmReset();});
+  document.getElementById('reset-modal').addEventListener('click',e=>{if(e.target===document.getElementById('reset-modal'))closeResetModal();});
   // 객관식으로 변경됨
   initDict();
 });
