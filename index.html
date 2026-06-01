@@ -183,7 +183,7 @@ input[type=text]:focus{border-color:var(--blue)}
 </div>
 
 <!-- Firebase 설정 -->
-<div id="screen-setup" class="screen on" style="max-width:480px;margin:0 auto;padding:16px">
+<div id="screen-setup" class="screen" style="display:none" style="max-width:480px;margin:0 auto;padding:16px">
   <div class="setup-hero">
     <div class="setup-icon">🔗</div>
     <div class="setup-title">멀티플레이어 설정</div>
@@ -208,7 +208,7 @@ input[type=text]:focus{border-color:var(--blue)}
 </div>
 
 <!-- 홈 -->
-<div id="screen-home" class="screen">
+<div id="screen-home" class="screen on">
   <div class="hero">
     <div class="hero-icon">📈</div>
     <div class="hero-title">경제금융 퀴즈 800선</div>
@@ -733,15 +733,13 @@ function renderRank(){
 
 // ── 초기화 ──
 document.addEventListener('DOMContentLoaded',()=>{
-  const cfg=loadCfg();
-  if(cfg?.url&&cfg?.key&&cfg?.pid){
-    // Firebase SDK 로드 대기
-    const tryInit=()=>{
-      if(typeof firebase!=='undefined'){initFB(cfg);}
-      else{setTimeout(tryInit,200);}
-    };
-    tryInit();
-  }
+  // Firebase 자동 연결 (설정값 내장)
+  const cfg={url:'https://ryanproject-985ea-default-rtdb.firebaseio.com',key:'AIzaSyBST8Xc40ABq-FU4PmmWpTlVOKRP6tuTwg',pid:'ryanproject-985ea'};
+  const tryInit=()=>{
+    if(typeof firebase!=='undefined'){initFB(cfg);}
+    else{setTimeout(tryInit,200);}
+  };
+  tryInit();
   document.getElementById('input-name').addEventListener('keydown',e=>{if(e.key==='Enter')join();});
   document.getElementById('ans-in').addEventListener('keydown',e=>{if(e.key==='Enter')submitAns();});
   initDict();
